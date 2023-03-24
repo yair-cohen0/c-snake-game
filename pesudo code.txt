@@ -1,3 +1,0 @@
-
-
-update snake -> add snake to array -> display snake
