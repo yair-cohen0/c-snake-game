@@ -11,36 +11,46 @@ struct Position {
     int y;
 };
 
-void displayArr(char* arr, int size);
+enum State {
+    UP,
+    RIGHT,
+    DOWN,
+    LEFT
+};
+
+void displayGameArray(char* gameArray, int gameSize);
 void clear_screen();
-char* createArray(int size);
-void resetArray(char *arr, int size);
-void insertSnakeToArr(struct Position *snake, char *arr, int size, int snakeSize);
-void updateSnakeArr(struct Position **snake, int size, int state, int *snakeSize, struct Position *apple);
-void resetSnake(struct Position* snake, int size);
-void increaseSnakeLength(struct Position **snake, int *snakeSize);
-void addApple(char **arr, struct Position pos, int size);
-struct Position getRandApplePosition(struct Position snakeHead, int size);
+char* createGameArray(int gameSize);
+void resetGameArray(char *gameArray, int gameSize);
+void insertSnakeToGame(struct Position *snakeArray, char *gameArray, int gameSize, int snakeSize);
+void updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple);
+void increaseSnakeLength(struct Position **snakeArray, int *snakeSize);
+void addApple(char **gameArray, struct Position apple, int gameSize);
+struct Position getRandApplePosition(struct Position snakeHead, int gameSize);
 
 
 int main() {
     char lastChar;
-    int size = 18;
-    int state = 2;
-    clock_t startTime, currTime;
+    enum State inputState = RIGHT;
+
     double diff;
+    clock_t startTime, currTime;
+
+
+    int gameSize = 18;
     int snakeSize = 1;
-    int tick = 0;
 
-    struct Position *snake = malloc(snakeSize * sizeof(struct Position));
-    snake[0] = (struct Position){5, 1};
 
-    struct Position apple = getRandApplePosition(snake[0], size);
 
-    char* arr = createArray(size);
-    addApple(&arr, apple, size);
+    struct Position *snakeArr = malloc(snakeSize * sizeof(struct Position));
+    snakeArr[0] = (struct Position){1, 1};
 
-    displayArr(arr, size);
+    struct Position apple = getRandApplePosition(snakeArr[0], gameSize);
+
+    char* gameArray = createGameArray(gameSize);
+    addApple(&gameArray, apple, gameSize);
+
+    displayGameArray(gameArray, gameSize);
     startTime = clock();
     while (1) {
         currTime = clock();
@@ -49,142 +59,129 @@ int main() {
             startTime = clock();
             clear_screen();
 
-            updateSnakeArr(&snake, size, state, &snakeSize, &apple);
-
-            insertSnakeToArr(snake, arr, size, snakeSize);
-            addApple(&arr, apple, size);
-            displayArr(arr, size);
+            updateSnakeArray(&snakeArr, gameSize, inputState, &snakeSize, &apple);
+            insertSnakeToGame(snakeArr, gameArray, gameSize, snakeSize);
+            addApple(&gameArray, apple, gameSize);
+            displayGameArray(gameArray, gameSize);
         }
 
         if (kbhit()) {
             lastChar = getch();
             if (lastChar == 'a'){
-                state = 4;
+                inputState = LEFT;
             } else if (lastChar == 'd') {
-                state = 2;
+                inputState = RIGHT;
             } else if (lastChar == 's') {
-                state = 3;
+                inputState = DOWN;
             } else if (lastChar == 'w') {
-                state = 1;
+                inputState = UP;
             } else if (lastChar == 'q') {
-                free(snake);
-                free(arr);
+                free(snakeArr);
+                free(gameArray);
                 return 1;
             }
         }
     }
 
-    free(arr);
+    free(gameArray);
     return 0;
 }
 
-void increaseSnakeLength(struct Position **snake, int *snakeSize) {
+void increaseSnakeLength(struct Position **snakeArray, int *snakeSize) {
     *snakeSize = *snakeSize + 1;
-    *snake = (struct Position*) realloc(*snake, *snakeSize * sizeof(struct Position));
+    *snakeArray = (struct Position*) realloc(*snakeArray, *snakeSize * sizeof(struct Position));
 }
 
 
-void updateSnakeArr(struct Position **snake, int size, int state, int *snakeSize, struct Position *apple) {
+void updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple) {
 
-    struct Position tempHead = (*snake)[0];
+    struct Position snakeHead = (*snakeArray)[0];
 
-    if (state == 1) {
-        tempHead.y--;
-    } else if (state == 2) {
-        tempHead.x++;
+    if (inputState == UP) {
+        snakeHead.y--;
+    } else if (inputState == RIGHT) {
+        snakeHead.x++;
     }
-    else if (state == 3) {
-        tempHead.y++;
-    } else if (state == 4) {
-        tempHead.x--;
-    }
-
-    if (tempHead.x > size - 2) {
-        tempHead.x = 1;
-    } else if (tempHead.x == 0) {
-        tempHead.x = size - 2;
-    } else if (tempHead.y > size - 2) {
-        tempHead.y = 1;
-    } else if (tempHead.y == 0) {
-        tempHead.y = size - 2;
+    else if (inputState == DOWN) {
+        snakeHead.y++;
+    } else if (inputState == LEFT) {
+        snakeHead.x--;
     }
 
-    if (tempHead.x == apple->x && tempHead.y == apple->y) {
-        *apple = getRandApplePosition((*snake)[0], size);
-        increaseSnakeLength(snake, snakeSize);
+    if (snakeHead.x > gameSize - 2) {
+        snakeHead.x = 1;
+    } else if (snakeHead.x == 0) {
+        snakeHead.x = gameSize - 2;
+    } else if (snakeHead.y > gameSize - 2) {
+        snakeHead.y = 1;
+    } else if (snakeHead.y == 0) {
+        snakeHead.y = gameSize - 2;
+    }
+
+    if (snakeHead.x == apple->x && snakeHead.y == apple->y) {
+        *apple = getRandApplePosition((*snakeArray)[0], gameSize);
+        increaseSnakeLength(snakeArray, snakeSize);
     }
 
     for (int i = *snakeSize - 1; i > 0; i--) {
-        (*snake)[i].x = (*snake)[i-1].x;
-        (*snake)[i].y = (*snake)[i-1].y;
+        (*snakeArray)[i].x = (*snakeArray)[i - 1].x;
+        (*snakeArray)[i].y = (*snakeArray)[i - 1].y;
     }
 
 
-    (*snake)[0] = tempHead;
+    (*snakeArray)[0] = snakeHead;
 
 }
 
-void insertSnakeToArr(struct Position *snake, char *arr, int size, int snakeSize) {
-    resetArray(arr, size);
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
+void insertSnakeToGame(struct Position *snakeArray, char *gameArray, int gameSize, int snakeSize) {
+    resetGameArray(gameArray, gameSize);
+    for (int i = 0; i < gameSize; i++) {
+        for (int j = 0; j < gameSize; j++) {
             for (int k = 0; k < snakeSize; k++) {
-                if (snake[k].x == i && snake[k].y == j) {
-                    *(arr + i + size * j) = '*';
+                if (snakeArray[k].x == i && snakeArray[k].y == j) {
+                    *(gameArray + i + gameSize * j) = '*';
                 }
             }
         }
     }
 }
 
-char *createArray(int size) {
-    char *arr = (char *)malloc(size * size * sizeof(char));
-    resetArray(arr, size);
+char *createGameArray(int gameSize) {
+    char *arr = (char *)malloc(gameSize * gameSize * sizeof(char));
+    resetGameArray(arr, gameSize);
     return arr;
 }
 
-void resetArray(char *arr, int size) {
+void resetGameArray(char *gameArray, int gameSize) {
     int i, j;
-    for (i = 0; i < size; i++)
-        for (j = 0; j < size; j++)
-            if (i == 0 || i == size - 1 || j == 0 || j == size - 1)
-                *(arr + i*size + j) = '*';
+    for (i = 0; i < gameSize; i++)
+        for (j = 0; j < gameSize; j++)
+            if (i == 0 || i == gameSize - 1 || j == 0 || j == gameSize - 1)
+                *(gameArray + i * gameSize + j) = '#';
             else
-                *(arr + i*size + j) = ' ';
+                *(gameArray + i * gameSize + j) = ' ';
 }
 
 
-void displayArr(char *arr, int size) {
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++)
-            printf("%c ", *(arr + i*size + j));
+void displayGameArray(char *gameArray, int gameSize) {
+    for (int i = 0; i < gameSize; i++) {
+        for (int j = 0; j < gameSize; j++)
+            printf("%c ", *(gameArray + i * gameSize + j));
 
         printf("\n");
     }
 }
 
-void resetSnake(struct Position* snake, int size) {
-    snake[0] = (struct Position){3,1};
-    for (int i = 1; i < size * size; i++) {
-        snake[i] = (struct Position){0,0};;
-    }
-    snake[1] = (struct Position){2,1};
-    snake[2] = (struct Position){1,1};
+void addApple(char **gameArray, struct Position apple, int gameSize) {
+    *(*gameArray + apple.y * gameSize + apple.x) = '$';
 }
 
-int getRandomInt(int max) {
-}
-
-void addApple(char **arr, struct Position pos, int size) {
-    *(*arr + pos.y * size + pos.x) = '$';
-}
-
-struct Position getRandApplePosition(struct Position snakeHead, int size) {
+struct Position getRandApplePosition(struct Position snakeHead, int gameSize) {
     srand(time(NULL));
     struct Position pos;
     do {
-        pos = (struct Position){rand() % size, rand() % size};
-    } while (pos.x <= 1 || pos.y <= 1 || pos.x >= size - 1 || pos.y >= size - 1);
+        pos = (struct Position){rand() % gameSize, rand() % gameSize};
+    } while (pos.x <= 1 || pos.y <= 1 || pos.x >= gameSize - 1 || pos.y >= gameSize - 1);
     return pos;
 }
 
