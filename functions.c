@@ -7,13 +7,13 @@
 #include <stdint.h>
 #include "types.h"
 
-
+int checkCollision(struct Position **snakeArray, struct Position *snakeHead, int snakeSize);
 void displayGameArray(char* gameArray, int gameSize);
 void clear_screen();
 char* createGameArray(int gameSize);
 void resetGameArray(char *gameArray, int gameSize);
 void insertSnakeToGame(struct Position *snakeArray, char *gameArray, int gameSize, int snakeSize);
-void updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple);
+int updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple);
 void increaseSnakeLength(struct Position **snakeArray, int *snakeSize);
 void addApple(char **gameArray, struct Position apple, int gameSize);
 struct Position getRandApplePosition(struct Position snakeHead, int gameSize);
@@ -25,7 +25,7 @@ void increaseSnakeLength(struct Position **snakeArray, int *snakeSize) {
 }
 
 
-void updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple) {
+int updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple) {
 
     struct Position snakeHead = (*snakeArray)[0];
 
@@ -50,6 +50,10 @@ void updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState
         snakeHead.y = gameSize - 2;
     }
 
+    if (checkCollision(snakeArray, &snakeHead, *snakeSize)) {
+        return 0;
+    }
+
     if (snakeHead.x == apple->x && snakeHead.y == apple->y) {
         *apple = getRandApplePosition((*snakeArray)[0], gameSize);
         increaseSnakeLength(snakeArray, snakeSize);
@@ -63,6 +67,16 @@ void updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState
 
     (*snakeArray)[0] = snakeHead;
 
+    return 1;
+}
+
+int checkCollision(struct Position** snakeArray, struct Position* snakeHead, int snakeSize) {
+    for (int i = 0; i < snakeSize; ++i) {
+        if (snakeHead->x == (*snakeArray)[i].x && snakeHead->y == (*snakeArray)[i].y) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void insertSnakeToGame(struct Position *snakeArray, char *gameArray, int gameSize, int snakeSize) {

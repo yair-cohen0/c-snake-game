@@ -13,7 +13,7 @@ int main() {
     clock_t startTime, currTime;
 
 
-    int gameSize = 18;
+    int gameSize = 10;
     int snakeSize = 1;
 
 
@@ -35,14 +35,18 @@ int main() {
             startTime = clock();
             clear_screen();
 
-            updateSnakeArray(&snakeArr, gameSize, inputState, &snakeSize, &apple);
+            if (!updateSnakeArray(&snakeArr, gameSize, inputState, &snakeSize, &apple)) {
+                printf("YOU LOST!");
+                getch();
+                return 0;
+            }
             insertSnakeToGame(snakeArr, gameArray, gameSize, snakeSize);
             addApple(&gameArray, apple, gameSize);
             displayGameArray(gameArray, gameSize);
         }
 
         if (kbhit()) {
-            lastChar = getch();
+            lastChar = (char)getch();
             if (lastChar == 'a'){
                 inputState = LEFT;
             } else if (lastChar == 'd') {
