@@ -36,10 +36,17 @@ int main() {
             clear_screen();
 
             if (!updateSnakeArray(&snakeArr, gameSize, inputState, &snakeSize, &apple)) {
-                printf("YOU LOST!");
+                printf("YOU LOST!\n\nPress q to exit or r to restart");
                 while (1) {
-                    if (getch() == 'q')
+                    lastChar = getch();
+                    if (lastChar == 'q')
                         return 0;
+                    else if (lastChar == 'r') {
+                        free(snakeArr);
+                        free(gameArray);
+                        clear_screen();
+                        return main();
+                    }
                 }
             }
             insertSnakeToGame(snakeArr, gameArray, gameSize, snakeSize);
