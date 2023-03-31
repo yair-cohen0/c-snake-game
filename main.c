@@ -21,7 +21,7 @@ int main() {
     struct Position *snakeArr = malloc(snakeSize * sizeof(struct Position));
     snakeArr[0] = (struct Position){1, 1};
 
-    struct Position apple = getRandApplePosition(snakeArr[0], gameSize);
+    struct Position apple = getRandApplePosition(&snakeArr, &snakeArr[0], gameSize, snakeSize);
 
     char* gameArray = createGameArray(gameSize);
     addApple(&gameArray, apple, gameSize);
@@ -37,8 +37,10 @@ int main() {
 
             if (!updateSnakeArray(&snakeArr, gameSize, inputState, &snakeSize, &apple)) {
                 printf("YOU LOST!");
-                getch();
-                return 0;
+                while (1) {
+                    if (getch() == 'q')
+                        return 0;
+                }
             }
             insertSnakeToGame(snakeArr, gameArray, gameSize, snakeSize);
             addApple(&gameArray, apple, gameSize);

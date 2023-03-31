@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include "types.h"
 
-int checkCollision(struct Position **snakeArray, struct Position *snakeHead, int snakeSize);
+int isCollision(struct Position **snakeArray, struct Position *position, int snakeSize);
 void displayGameArray(char* gameArray, int gameSize);
 void clear_screen();
 char* createGameArray(int gameSize);
@@ -16,8 +16,8 @@ void insertSnakeToGame(struct Position *snakeArray, char *gameArray, int gameSiz
 int updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple);
 void increaseSnakeLength(struct Position **snakeArray, int *snakeSize);
 void addApple(char **gameArray, struct Position apple, int gameSize);
-struct Position getRandApplePosition(struct Position snakeHead, int gameSize);
-
+struct Position getRandApplePosition(struct Position **snakeArray, struct Position *currentApple, int gameSize, int snakeSize);
+int isFar(struct Position *currentApple, struct Position *newApple, int gameSize);
 
 void increaseSnakeLength(struct Position **snakeArray, int *snakeSize) {
     *snakeSize = *snakeSize + 1;
@@ -26,7 +26,6 @@ void increaseSnakeLength(struct Position **snakeArray, int *snakeSize) {
 
 
 int updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState, int *snakeSize, struct Position *apple) {
-
     struct Position snakeHead = (*snakeArray)[0];
 
     if (inputState == UP) {
@@ -50,12 +49,12 @@ int updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState,
         snakeHead.y = gameSize - 2;
     }
 
-    if (checkCollision(snakeArray, &snakeHead, *snakeSize)) {
+    if (isCollision(snakeArray, &snakeHead, *snakeSize)) {
         return 0;
     }
 
     if (snakeHead.x == apple->x && snakeHead.y == apple->y) {
-        *apple = getRandApplePosition((*snakeArray)[0], gameSize);
+        *apple = getRandApplePosition(snakeArray, apple, gameSize, *snakeSize);
         increaseSnakeLength(snakeArray, snakeSize);
     }
 
@@ -70,9 +69,9 @@ int updateSnakeArray(struct Position **snakeArray, int gameSize, int inputState,
     return 1;
 }
 
-int checkCollision(struct Position** snakeArray, struct Position* snakeHead, int snakeSize) {
+int isCollision(struct Position** snakeArray, struct Position* position, int snakeSize) {
     for (int i = 0; i < snakeSize; ++i) {
-        if (snakeHead->x == (*snakeArray)[i].x && snakeHead->y == (*snakeArray)[i].y) {
+        if (position->x == (*snakeArray)[i].x && position->y == (*snakeArray)[i].y) {
             return 1;
         }
     }
@@ -122,13 +121,28 @@ void addApple(char **gameArray, struct Position apple, int gameSize) {
     *(*gameArray + apple.y * gameSize + apple.x) = '$';
 }
 
-struct Position getRandApplePosition(struct Position snakeHead, int gameSize) {
+struct Position getRandApplePosition(struct Position **snakeArray, struct Position *currentApple, int gameSize, int snakeSize) {
+    struct Position* availPositions = malloc(sizeof(struct Position) * gameSize * gameSize);
+    int length = 0;
+    for (int i = 1; i < gameSize - 1; ++i) {
+        for (int j = 1; j < gameSize - 1; ++j) {
+            struct Position newApple = {j, i};
+            if (!isCollision(snakeArray, &newApple, snakeSize)  && isFar(currentApple, &newApple, gameSize)) {
+                availPositions[length] = (struct Position) {j, i};
+                length++;
+            }
+        }
+    }
     srand(time(NULL));
-    struct Position pos;
-    do {
-        pos = (struct Position){rand() % gameSize, rand() % gameSize};
-    } while (pos.x <= 1 || pos.y <= 1 || pos.x >= gameSize - 1 || pos.y >= gameSize - 1);
-    return pos;
+    return availPositions[rand() % length];
+}
+
+int isFar(struct Position *currentApple, struct Position *newApple, int gameSize) {
+    int space = gameSize / 3;
+    if (currentApple->x + space >  newApple->x && currentApple->x - space < newApple->x &&
+        currentApple->y + space >  newApple->y && currentApple->y - space < newApple->y)
+        return 0;
+    return 1;
 }
 
 void clear_screen() {
